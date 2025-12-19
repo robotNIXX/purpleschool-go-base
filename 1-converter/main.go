@@ -15,11 +15,34 @@ func main() {
 	var destCurrency string
 	var result float64
 	var amount float64
+	var error error
 
-	sourceCurrency, amount, destCurrency, error := getTheCurrencyValues()
-	if error != nil {
-		fmt.Printf("%s\n", error)
-		return
+	for {
+		sourceCurrency, error = getTheSourceCurrency()
+		if error != nil {
+			fmt.Printf("%s\n", error)
+			continue
+		} else {
+			break
+		}
+	}
+	for {
+		destCurrency, error = getTheDestinationCurrency(sourceCurrency)
+		if error != nil {
+			fmt.Printf("%s\n", error)
+			continue
+		} else {
+			break
+		}
+	}
+	for {
+		amount, error = getTheAmount(sourceCurrency)
+		if error != nil {
+			fmt.Printf("%s\n", error)
+			continue
+		} else {
+			break
+		}
 	}
 	result, error = convertTheCurrency(amount, sourceCurrency, destCurrency)
 	if error != nil {
@@ -32,31 +55,38 @@ func main() {
 /*
 Get the euro amount
 */
-func getTheCurrencyValues() (string, float64, string, error) {
+
+func getTheSourceCurrency() (string, error) {
 	var sourceCurrency string
-	var destCurrency string
-	var amount float64
 	fmt.Print("Введите исходную валюту (USD, RUB, EURO): ")
 	fmt.Scan(&sourceCurrency)
 	if sourceCurrency != "USD" && sourceCurrency != "RUB" && sourceCurrency != "EURO" {
-		return "", 0, "", errors.New("Используйте только предложенные варианты валют")
+		return "", errors.New("Используйте только предложенные варианты валют")
 	}
+	return sourceCurrency, nil
+}
+
+func getTheDestinationCurrency(currency string) (string, error) {
+	var destCurrency string
 	fmt.Print("Введите желаемую валюту (USD, RUB, EURO): ")
 	fmt.Scan(&destCurrency)
-	if destCurrency != sourceCurrency {
-		if destCurrency != "USD" && destCurrency != "RUB" && destCurrency != "EURO" {
-			return "", 0, "", errors.New("Используйте только предложенные варианты валют")
-		}
-	} else {
-		return "", 0, "", errors.New("Используйте только предложенные варианты валют (исключая уже введенную)")
+	if destCurrency == currency {
+		return "", errors.New("Валюта должна различаться")
 	}
+	if destCurrency != "USD" && destCurrency != "RUB" && destCurrency != "EURO" {
+		return "", errors.New("Используйте только предложенные варианты валют")
+	}
+	return destCurrency, nil
+}
+
+func getTheAmount(sourceCurrency string) (float64, error) {
+	var amount float64
 	fmt.Printf("Введите количество %s: ", sourceCurrency)
 	fmt.Scan(&amount)
 	if amount < 0 {
-		return "", 0, "", errors.New("Значение не может быть меньше нуля")
+		return 0, errors.New("Значение не может быть меньше нуля")
 	}
-
-	return sourceCurrency, amount, destCurrency, nil
+	return amount, nil
 }
 
 func convertTheCurrency(value float64, sourceCurrency string, destCurrency string) (float64, error) {
@@ -71,10 +101,10 @@ func convertTheCurrency(value float64, sourceCurrency string, destCurrency strin
 		return value * EURO_TO_RUB, nil
 	}
 	if sourceCurrency == "USD" && destCurrency == "EURO" {
-		return value / USD_TO_EUR, nil
+		return value * USD_TO_EUR, nil
 	}
 	if sourceCurrency == "RUB" && destCurrency == "EURO" {
-		return value / USD_TO_RUB, nil
+		return value / EURO_TO_RUB, nil
 	}
 	if sourceCurrency == "RUB" && destCurrency == "USD" {
 		return value / USD_TO_RUB, nil
